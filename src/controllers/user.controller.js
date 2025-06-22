@@ -1,6 +1,8 @@
 //still working on this file ...
 const User = require("../models/user.model");
-const bcrypt = require('bcryptjs');
+const bcrypt = require("bcryptjs");
+const { encrypt } = require("../services/Encryption");
+
 // Get all users
 exports.getAllUsers = async (req, res) => {
   try {
@@ -25,7 +27,8 @@ exports.getOneUser = async (req, res) => {
 // Create a new user
 exports.createUser = async (req, res) => {
   try {
-    const { username, email, password, name, phone, profilePic, role } = req.body;
+    const { username, email, password, name, phone, profilePic, role } =
+      req.body;
 
     const existingUser = await User.findOne({ username });
     if (existingUser) {
@@ -35,7 +38,7 @@ exports.createUser = async (req, res) => {
     const user = new User({
       username,
       email,
-      password, // hashed 
+      password: encrypt(password), // hashed
       name,
       phone,
       profilePic,
@@ -50,7 +53,7 @@ exports.createUser = async (req, res) => {
 
     res.status(201).json({
       message: "User created successfully",
-      user: userResponse
+      user: userResponse,
     });
   } catch (error) {
     res.status(500).json({ error: error.message || "Failed to create user" });
@@ -88,11 +91,10 @@ exports.modifyUser = async (req, res) => {
       const hashedPassword = await bcrypt.hash(password, 12);
       updateData.password = hashedPassword;
     }
-    const updatedUser = await User.findByIdAndUpdate(
-      req.params.id,
-      req.body,
-      { new: true, runValidators: true }
-    ).select("-password");
+    const updatedUser = await User.findByIdAndUpdate(req.params.id, req.body, {
+      new: true,
+      runValidators: true,
+    }).select("-password");
 
     if (!updatedUser) {
       return res.status(404).json({ error: "User not found" });
@@ -100,7 +102,7 @@ exports.modifyUser = async (req, res) => {
 
     res.status(200).json({
       message: "User updated successfully",
-      user: updatedUser
+      user: updatedUser,
     });
   } catch (error) {
     res.status(500).json({ error: "Failed to update user" });
