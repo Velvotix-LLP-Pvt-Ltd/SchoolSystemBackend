@@ -27,18 +27,22 @@ exports.getOneUser = async (req, res) => {
 // Create a new user
 exports.createUser = async (req, res) => {
   try {
-    const { username, email, password, name, phone, profilePic, role } =
-      req.body;
+    const { username, email, password, name, phone, role } = req.body;
 
     const existingUser = await User.findOne({ username });
     if (existingUser) {
       return res.status(400).json({ error: "Username already exists" });
     }
 
+    let profilePic = "";
+    if (req.file) {
+      profilePic = `/utils/users/${req.file.filename}`;
+    }
+
     const user = new User({
       username,
       email,
-      password: encrypt(password), // hashed
+      password: encrypt(password),
       name,
       phone,
       profilePic,
@@ -47,7 +51,6 @@ exports.createUser = async (req, res) => {
 
     await user.save();
 
-    // Return user without password
     const userResponse = user.toObject();
     delete userResponse.password;
 

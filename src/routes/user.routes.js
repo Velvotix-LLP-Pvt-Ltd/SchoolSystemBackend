@@ -9,12 +9,18 @@ const {
   deleteOneUser,
   modifyUser,
 } = require("../controllers/user.controller");
-
+const { upload, compressAndSaveImage } = require("../services/Upload");
 const { validateUser } = require("../middlewares/user.middleware");
 const validate = require("../middlewares/validate.middleware");
 
 // Create a new user
-router.post("/", validateUser, validate, createUser);
+router.post(
+  "/",
+  validate,
+  upload.single("profilePic"),
+  compressAndSaveImage,
+  createUser
+);
 
 // Get all users
 router.get("/", getAllUsers);
