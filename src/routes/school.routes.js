@@ -1,20 +1,36 @@
 const express = require("express");
 const router = express.Router();
 const schoolController = require("../controllers/school.controller");
+const { protect, allowRoles } = require("../middleware/authMiddleware");
 
 // Create a new school
-router.post("/", schoolController.createSchool);
+router.post("/", protect, allowRoles("Admin"), schoolController.createSchool);
 
 // Get all schools
-router.get("/", schoolController.getAllSchools);
+router.get("/", protect, allowRoles("Admin"), schoolController.getAllSchools);
 
 // Get a single school by ID
-router.get("/:id", schoolController.getSchoolById);
+router.get(
+  "/:id",
+  protect,
+  allowRoles("Admin", "School"),
+  schoolController.getSchoolById
+);
 
 // Update a school by ID
-router.put("/:id", schoolController.updateSchool);
+router.put(
+  "/:id",
+  protect,
+  allowRoles("Admin", "School"),
+  schoolController.updateSchool
+);
 
 // Delete a school by ID
-router.delete("/:id", schoolController.deleteSchool);
+router.delete(
+  "/:id",
+  protect,
+  allowRoles("Admin"),
+  schoolController.deleteSchool
+);
 
 module.exports = router;

@@ -1,7 +1,6 @@
 //still working on this file ...
 const User = require("../models/user.model");
 const bcrypt = require("bcryptjs");
-const { encrypt } = require("../services/Encryption");
 
 // Get all users
 exports.getAllUsers = async (req, res) => {
@@ -42,7 +41,7 @@ exports.createUser = async (req, res) => {
     const user = new User({
       username,
       email,
-      password: encrypt(password),
+      password,
       name,
       phone,
       profilePic,

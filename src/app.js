@@ -1,6 +1,6 @@
 const express = require("express");
 const userRoutes = require("./routes/user.routes");
-const schoolRoutes = require("./routes/school.routes"); 
+const schoolRoutes = require("./routes/school.routes");
 const errorHandler = require("./middlewares/error.middleware");
 const path = require("path");
 const cors = require("cors");
