@@ -1,7 +1,7 @@
 const bcrypt = require("bcryptjs");
 const School = require("../models/school.model");
 
-// ✅ Create a new school
+// Create a new school
 exports.createSchool = async (req, res) => {
   try {
     const school = new School(req.body);
@@ -18,7 +18,7 @@ exports.createSchool = async (req, res) => {
   }
 };
 
-// ✅ Get all schools (without passwords)
+// Get all schools (without passwords)
 exports.getAllSchools = async (req, res) => {
   try {
     const schools = await School.find().select("-password");
@@ -28,7 +28,7 @@ exports.getAllSchools = async (req, res) => {
   }
 };
 
-// ✅ Get a single school by ID
+// Get a single school by ID
 exports.getSchoolById = async (req, res) => {
   try {
     const school = await School.findById(req.params.id).select("-password");
@@ -40,7 +40,7 @@ exports.getSchoolById = async (req, res) => {
   }
 };
 
-// ✅ Update a school by ID
+// Update a school by ID
 exports.updateSchool = async (req, res) => {
   try {
     const updateData = { ...req.body };
@@ -65,7 +65,7 @@ exports.updateSchool = async (req, res) => {
   }
 };
 
-// ✅ Delete a school by ID
+// Delete a school by ID
 exports.deleteSchool = async (req, res) => {
   try {
     const school = await School.findByIdAndDelete(req.params.id);

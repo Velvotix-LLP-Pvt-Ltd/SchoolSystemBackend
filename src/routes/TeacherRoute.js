@@ -13,7 +13,7 @@ router.post(
 router.get(
   "/",
   protect,
-  allowRoles("Admin", "School", "Teacher"),
+  allowRoles("Admin", "School"),
   teacherController.getTeachers
 );
 router.get(
@@ -33,6 +33,13 @@ router.delete(
   allowRoles("Admin", "School"),
   protect,
   teacherController.deleteTeacher
+);
+
+router.get(
+  "/school/:school_code",
+  allowRoles("Admin", "School", "Teacher"),
+  protect,
+  teacherController.getTeachersBySchool
 );
 
 module.exports = router;

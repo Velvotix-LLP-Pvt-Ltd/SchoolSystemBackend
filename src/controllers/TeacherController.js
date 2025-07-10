@@ -1,7 +1,7 @@
 const Teacher = require("../models/TeachersModel");
 const School = require("../models/school.model");
 
-// 🔄 Utility function to update teacher count in school
+// Utility function to update teacher count in school
 const updateTeacherSummary = async (schoolId) => {
   const total = await Teacher.countDocuments({ school: schoolId });
   const male = await Teacher.countDocuments({
@@ -28,7 +28,7 @@ const updateTeacherSummary = async (schoolId) => {
   });
 };
 
-// ✅ Create Teacher
+// Create Teacher
 exports.createTeacher = async (req, res) => {
   try {
     const { school_code, ...teacherData } = req.body;
@@ -57,7 +57,7 @@ exports.createTeacher = async (req, res) => {
   }
 };
 
-// ✅ Get All Teachers (optionally filter by school)
+// Get All Teachers (optionally filter by school)
 exports.getTeachers = async (req, res) => {
   try {
     const filter = req.query.school ? { school: req.query.school } : {};
@@ -68,7 +68,7 @@ exports.getTeachers = async (req, res) => {
   }
 };
 
-// ✅ Get Single Teacher by ID
+// Get Single Teacher by ID
 exports.getTeacherById = async (req, res) => {
   try {
     const teacher = await Teacher.findById(req.params.id).populate("school");
@@ -79,7 +79,7 @@ exports.getTeacherById = async (req, res) => {
   }
 };
 
-// ✅ Update Teacher
+// Update Teacher
 exports.updateTeacher = async (req, res) => {
   try {
     const teacher = await Teacher.findByIdAndUpdate(req.params.id, req.body, {
@@ -95,7 +95,7 @@ exports.updateTeacher = async (req, res) => {
   }
 };
 
-// ✅ Delete Teacher
+// Delete Teacher
 exports.deleteTeacher = async (req, res) => {
   try {
     const teacher = await Teacher.findByIdAndDelete(req.params.id);
@@ -104,6 +104,21 @@ exports.deleteTeacher = async (req, res) => {
     await updateTeacherSummary(teacher.school);
 
     res.json({ message: "Teacher deleted and summary updated" });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+// Get All Teachers for a School
+exports.getTeachersBySchool = async (req, res) => {
+  try {
+    const school = await School.findOne({
+      school_code: req.params.school_code,
+    });
+    if (!school) return res.status(404).json({ error: "School not found" });
+
+    const teachers = await Teacher.find({ school: school._id });
+    res.json(teachers);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
