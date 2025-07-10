@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const schoolController = require("../controllers/school.controller");
-const { protect, allowRoles } = require("../middleware/authMiddleware");
+const { protect, allowRoles } = require("../middlewares/AuthMiddlerware");
 
 // Create a new school
 router.post("/", protect, allowRoles("Admin"), schoolController.createSchool);

@@ -2,6 +2,7 @@ const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
 const User = require("../models/user.model");
 const School = require("../models/school.model");
+const Teacher = require("../models/TeachersModel");
 
 // 🔐 Generate JWT token with 30-minute expiry
 const generateToken = (payload) => {
@@ -10,34 +11,48 @@ const generateToken = (payload) => {
 
 // ✅ Login controller (shared for both School and User)
 exports.login = async (req, res) => {
-  const { username, password } = req.body;
-  let user = null;
-  let role = null;
-
   try {
-    // Try School login first
+    const { username, password } = req.body;
+    let user = null;
+    let role = null;
+
+    // 1. Try School login using school_code
     user = await School.findOne({ school_code: username });
     if (user) {
       role = "School";
     } else {
-      // Fallback to User
-      user = await User.findOne({ username: username });
-      if (user) role = user.role;
+      // 2. Try Admin/User login using username
+      user = await User.findOne({ username });
+      if (user) {
+        role = user.role;
+      } else {
+        // 3. Try Teacher login using teacherId
+        user = await Teacher.findOne({ teacherId: username });
+        if (user) {
+          role = "Teacher";
+        }
+      }
     }
 
-    if (!user)
+    // If user not found
+    if (!user) {
       return res.status(401).json({ error: "Invalid username or password" });
+    }
 
+    // Compare password
     const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch)
+    if (!isMatch) {
       return res.status(401).json({ error: "Invalid username or password" });
+    }
 
+    // Generate JWT token
     const token = generateToken({
       id: user._id,
       role,
-      schoolId: user._id,
+      schoolId: user.school || (role === "School" ? user._id : null),
     });
 
+    // Respond with token
     res.status(200).json({
       message: "Login successful",
       token,
