@@ -6,7 +6,14 @@ const bcrypt = require("bcryptjs");
 exports.getAllUsers = async (req, res) => {
   try {
     const users = await User.find().select("-password");
-    res.status(200).json(users);
+
+    const formattedUsers = users.map((user) => ({
+      ...user.toObject(),
+      id: user._id,
+      _id: undefined,
+    }));
+
+    res.status(200).json(formattedUsers);
   } catch (err) {
     res.status(500).json({ error: "Failed to fetch users" });
   }
@@ -17,9 +24,18 @@ exports.getOneUser = async (req, res) => {
   try {
     const user = await User.findById(req.params.id).select("-password");
     if (!user) return res.status(404).json({ error: "User not found" });
-    res.status(200).json(user);
+
+    const formattedUser = {
+      ...user.toObject(),
+      id: user._id,
+      _id: undefined,
+    };
+
+    res.status(200).json(formattedUser);
   } catch (err) {
-    res.status(500).json({ error: "Failed to fetch user error" });
+    res
+      .status(500)
+      .json({ error: "Failed to fetch user", detail: err.message });
   }
 };
 
@@ -86,27 +102,40 @@ exports.deleteOneUser = async (req, res) => {
 // Modify (update) user by ID
 exports.modifyUser = async (req, res) => {
   try {
-    const { password, ...otherFields } = req.body;
+    const { password, id, _id, ...otherFields } = req.body;
     const updateData = { ...otherFields };
 
     if (password) {
       const hashedPassword = await bcrypt.hash(password, 12);
       updateData.password = hashedPassword;
     }
-    const updatedUser = await User.findByIdAndUpdate(req.params.id, req.body, {
-      new: true,
-      runValidators: true,
-    }).select("-password");
+
+    const updatedUser = await User.findByIdAndUpdate(
+      req.params.id,
+      updateData,
+      {
+        new: true,
+        runValidators: true,
+      }
+    ).select("-password");
 
     if (!updatedUser) {
+      console.warn("⚠️ User not found for update");
       return res.status(404).json({ error: "User not found" });
     }
 
+    const formattedUser = {
+      ...updatedUser.toObject(),
+      id: updatedUser._id,
+      _id: undefined,
+    };
+
     res.status(200).json({
       message: "User updated successfully",
-      user: updatedUser,
+      user: formattedUser,
     });
   } catch (error) {
+    console.error("Error in modifyUser:", error.message);
     res.status(500).json({ error: "Failed to update user" });
   }
 };

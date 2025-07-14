@@ -29,7 +29,7 @@ router.get("/", getAllUsers);
 router.get("/:id", getOneUser);
 
 // Update a user by ID
-router.put("/:id", validateUser, validate, modifyUser);
+router.put("/:id", modifyUser);
 
 // Delete a user by ID
 router.delete("/:id", deleteOneUser);
