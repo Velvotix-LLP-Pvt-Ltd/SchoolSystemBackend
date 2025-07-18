@@ -33,7 +33,6 @@ exports.payFee = async (req, res) => {
 
     const student = await Student.findById(studentId).populate("school");
     if (!student) return res.status(404).json({ error: "Student not found" });
-
     if (!student.school)
       return res.status(400).json({ error: "Student has no school assigned" });
 
@@ -52,7 +51,7 @@ exports.payFee = async (req, res) => {
       if (balance <= 0) break;
 
       const toPay = Math.min(balance, log.balance);
-      log.paid = (log.paid || 0) + toPay; // ← Safely increment paid
+      log.paid = (log.paid || 0) + toPay;
       log.balance -= toPay;
       log.status = log.balance === 0 ? "Paid" : "Partial";
 
@@ -71,10 +70,7 @@ exports.payFee = async (req, res) => {
 
     await payment.save();
 
-    res.status(201).json({
-      message: "Payment successful",
-      payment,
-    });
+    res.status(201).json({ message: "Payment successful", payment });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -87,7 +83,6 @@ exports.getFeeLogs = async (req, res) => {
       year: 1,
       month: 1,
     });
-
     res.json(logs);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -100,9 +95,51 @@ exports.getPayments = async (req, res) => {
     const payments = await FeePayment.find({
       student: req.params.studentId,
     }).sort({ paymentDate: -1 });
-
     res.json(payments);
   } catch (err) {
     res.status(500).json({ error: err.message });
+  }
+};
+
+// 5. Add Custom Fee (one-time expense or fine)
+exports.addCustomFeeLog = async (req, res) => {
+  try {
+    const { student, school, academicYear, customFees, due, paid, remarks } =
+      req.body;
+
+    const balance = due - (paid || 0);
+    const status = paid === due ? "Paid" : paid > 0 ? "Partial" : "Unpaid";
+
+    const newLog = await FeeLog.create({
+      student,
+      school,
+      academicYear,
+      month: "Custom",
+      year: new Date().getFullYear(),
+      type: "Custom",
+      customFees,
+      due,
+      paid,
+      balance,
+      status,
+      remarks,
+    });
+
+    res.status(201).json(newLog);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: err.message });
+  }
+};
+
+exports.getFeeStructure = async (req, res) => {
+  try {
+    const feeStructures = await FeeStructure.find()
+      .sort({ className: 1 })
+      .populate("school");
+    res.status(200).json(feeStructures);
+  } catch (error) {
+    console.error("Error fetching fee structures:", error);
+    res.status(500).json({ error: "Failed to fetch fee structures" });
   }
 };
