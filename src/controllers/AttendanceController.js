@@ -1,33 +1,57 @@
 const Attendance = require("../models/AttendanceModel");
 const Student = require("../models/StudentModel");
+const School = require("../models/school.model");
 
 // Mark Attendance
 exports.markAttendance = async (req, res) => {
   try {
-    const { studentId, date, status, remarks } = req.body;
+    const data = Array.isArray(req.body) ? req.body : [req.body];
 
-    const student = await Student.findById(studentId);
-    if (!student) return res.status(404).json({ error: "Student not found" });
+    const created = [];
 
-    const attendance = new Attendance({
-      school: req.user.schoolId,
-      student: studentId,
-      date: new Date(date),
-      status,
-      remarks,
-      recordedBy: req.user.id,
-      recordedByModel: req.user.role,
-    });
+    for (const entry of data) {
+      const { studentId, date, status, remarks, schoolId } = entry;
 
-    await attendance.save();
+      const student = await Student.findById(studentId);
+      const school = await School.findById(schoolId);
+      if (!student || !school) continue; // skip if invalid
 
-    res.status(201).json({ message: "Attendance marked", attendance });
-  } catch (err) {
-    if (err.code === 11000) {
+      const attendance = new Attendance({
+        school: schoolId,
+        student: studentId,
+        date: new Date(date),
+        status,
+        remarks,
+        recordedBy: req.user.id,
+        recordedByModel: req.user.role,
+      });
+
+      try {
+        await attendance.save();
+        created.push(attendance);
+      } catch (err) {
+        if (err.code === 11000) {
+          // Duplicate (already marked for the date) – ignore or log
+          continue;
+        } else {
+          throw err; // rethrow unexpected errors
+        }
+      }
+    }
+
+    if (created.length === 0) {
       return res.status(400).json({
-        error: "Attendance already exists for this student on this date",
+        message:
+          "No new attendance entries were created. Possible duplicates or invalid data.",
       });
     }
+
+    res.status(201).json({
+      message: `${created.length} attendance record(s) marked`,
+      records: created,
+    });
+  } catch (err) {
+    console.error(err);
     res.status(500).json({ error: err.message });
   }
 };
@@ -48,10 +72,14 @@ exports.getStudentAttendance = async (req, res) => {
 // Get all attendance records (no filters)
 exports.getAllAttendance = async (req, res) => {
   try {
-    const records = await Attendance.find()
-      //   .populate("student", "name class section studentId")
-      //   .populate("school", "school_name school_code")
-      .sort({ date: -1 });
+    const { schoolId, studentId } = req.query;
+    const filter = {};
+    const student = await Student.find({ studentId: studentId });
+    const school = await School.find({ school_code: schoolId });
+    if (schoolId) filter.school = school;
+    if (studentId) filter.student = student;
+
+    const records = await Attendance.find(filter).sort({ date: -1 });
 
     res.json(records);
   } catch (err) {

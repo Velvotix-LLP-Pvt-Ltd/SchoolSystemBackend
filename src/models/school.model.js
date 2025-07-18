@@ -7,6 +7,7 @@ const SchoolSchema = new mongoose.Schema(
       type: String,
       required: true,
       unique: true,
+      trim: true,
     },
     school_name: {
       type: String,
@@ -31,12 +32,11 @@ const SchoolSchema = new mongoose.Schema(
       },
       urban_rural: {
         type: String,
-        enum: ["Urban", "Rural"],
       },
     },
     established_year: Number,
     school_category: String,
-    school_type: String, // Boys, Girls, Co-educational
+    school_type: String,
     school_management: String,
     affiliation_board: String,
     medium_of_instruction: [String],
@@ -122,25 +122,21 @@ const SchoolSchema = new mongoose.Schema(
       remarks: String,
     },
 
-    last_updated: {
-      type: Date,
-      default: Date.now,
-    },
-
     password: {
       type: String,
       required: true,
     },
+
     role: {
       type: String,
       default: "School",
       enum: ["School"],
     },
   },
-  { timestamps: true }
+  { timestamps: true } // includes createdAt and updatedAt
 );
 
-// Pre-save password hashing
+// 🔐 Hash password before saving
 SchoolSchema.pre("save", async function (next) {
   if (!this.isModified("password")) return next();
   const salt = await bcrypt.genSalt(10);
@@ -148,7 +144,7 @@ SchoolSchema.pre("save", async function (next) {
   next();
 });
 
-// Method to compare password during login
+// 🔑 Compare password method
 SchoolSchema.methods.comparePassword = async function (candidatePassword) {
   return await bcrypt.compare(candidatePassword, this.password);
 };

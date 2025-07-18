@@ -13,7 +13,7 @@ router.get("/", protect, allowRoles("Admin"), schoolController.getAllSchools);
 router.get(
   "/:id",
   protect,
-  allowRoles("Admin", "School"),
+  allowRoles("Admin", "School", "Teacher"),
   schoolController.getSchoolById
 );
 

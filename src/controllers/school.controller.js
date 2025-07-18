@@ -1,18 +1,28 @@
 const bcrypt = require("bcryptjs");
 const School = require("../models/school.model");
+const mongoose = require("mongoose");
 
-// Create a new school
 exports.createSchool = async (req, res) => {
   try {
+    if (!req.body.school_code) {
+      return res.status(400).json({ error: "school_code is required" });
+    }
+
+    // Add default password if not present
+    if (!req.body.password) {
+      req.body.password = `${req.body.school_code}@1234`;
+    }
+
     const school = new School(req.body);
     await school.save();
 
     const schoolObj = school.toObject();
     delete schoolObj.password;
 
-    res
-      .status(201)
-      .json({ message: "School created successfully", school: schoolObj });
+    res.status(201).json({
+      message: "School created successfully",
+      school: schoolObj,
+    });
   } catch (err) {
     res.status(400).json({ error: err.message });
   }
@@ -31,7 +41,14 @@ exports.getAllSchools = async (req, res) => {
 // Get a single school by ID
 exports.getSchoolById = async (req, res) => {
   try {
-    const school = await School.findById(req.params.id).select("-password");
+    const { id } = req.params;
+
+    const query = mongoose.Types.ObjectId.isValid(id)
+      ? { _id: id }
+      : { school_code: id };
+
+    const school = await School.findOne(query).select("-password");
+
     if (!school) return res.status(404).json({ error: "School not found" });
 
     res.status(200).json(school);
