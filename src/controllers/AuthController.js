@@ -88,3 +88,41 @@ exports.refreshToken = async (req, res) => {
     res.status(401).json({ error: "Token expired or invalid" });
   }
 };
+
+exports.check = async (req, res) => {
+  const authHeader = req.headers.authorization;
+
+  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    return res
+      .status(401)
+      .json({
+        valid: false,
+        error: "Authorization header missing or malformed",
+      });
+  }
+
+  const token = authHeader.split(" ")[1];
+
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    return res.status(200).json({
+      valid: true,
+      expired: false,
+      decoded,
+    });
+  } catch (err) {
+    if (err.name === "TokenExpiredError") {
+      return res.status(401).json({
+        valid: false,
+        expired: true,
+        error: "Token expired",
+      });
+    }
+
+    return res.status(401).json({
+      valid: false,
+      expired: false,
+      error: "Invalid token",
+    });
+  }
+};
