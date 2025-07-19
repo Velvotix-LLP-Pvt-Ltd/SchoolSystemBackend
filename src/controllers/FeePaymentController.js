@@ -2,6 +2,7 @@ const FeeStructure = require("../models/FeeStructureModel");
 const FeeLog = require("../models/FeeLogModel");
 const FeePayment = require("../models/FeePaymentModel");
 const Student = require("../models/StudentModel");
+const School = require("../models/school.model");
 
 // 1. Create/Update FeeStructure
 exports.createFeeStructure = async (req, res) => {
@@ -134,12 +135,67 @@ exports.addCustomFeeLog = async (req, res) => {
 
 exports.getFeeStructure = async (req, res) => {
   try {
-    const feeStructures = await FeeStructure.find()
+    const { school_code } = req.query;
+
+    let filter = {};
+
+    if (school_code) {
+      const school = await School.findOne({ school_code });
+      if (!school) {
+        return res.status(404).json({ error: "School not found" });
+      }
+      filter.school = school._id;
+    }
+
+    const feeStructures = await FeeStructure.find(filter)
       .sort({ className: 1 })
       .populate("school");
+
     res.status(200).json(feeStructures);
   } catch (error) {
     console.error("Error fetching fee structures:", error);
     res.status(500).json({ error: "Failed to fetch fee structures" });
+  }
+};
+
+exports.getSingleFeeStructure = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const feeStructure = await FeeStructure.findById(id).populate("school");
+    if (!feeStructure)
+      return res.status(404).json({ error: "Fee structure not found" });
+    res.status(200).json(feeStructure);
+  } catch (error) {
+    console.error("Error fetching fee structure:", error);
+    res.status(500).json({ error: "Failed to fetch fee structure" });
+  }
+};
+
+exports.updateFeeStructure = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const updated = await FeeStructure.findByIdAndUpdate(id, req.body, {
+      new: true,
+      runValidators: true,
+    });
+    if (!updated)
+      return res.status(404).json({ error: "Fee structure not found" });
+    res.status(200).json(updated);
+  } catch (error) {
+    console.error("Error updating fee structure:", error);
+    res.status(500).json({ error: "Failed to update fee structure" });
+  }
+};
+
+exports.deleteFeeStructure = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const deleted = await FeeStructure.findByIdAndDelete(id);
+    if (!deleted)
+      return res.status(404).json({ error: "Fee structure not found" });
+    res.status(200).json({ message: "Fee structure deleted successfully" });
+  } catch (error) {
+    console.error("Error deleting fee structure:", error);
+    res.status(500).json({ error: "Failed to delete fee structure" });
   }
 };

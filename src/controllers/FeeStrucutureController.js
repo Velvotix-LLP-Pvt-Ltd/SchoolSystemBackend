@@ -26,7 +26,7 @@ exports.createFeeStructure = async (req, res) => {
   }
 };
 
-// ✅ 2. Pay fee for student
+// 2. Pay fee for student
 exports.payFee = async (req, res) => {
   try {
     const { studentId, amountPaid, mode, remarks } = req.body;

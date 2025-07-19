@@ -12,6 +12,10 @@ router.post("/structure", feeController.createFeeStructure);
 
 router.get("/fee-structure", feeController.getFeeStructure);
 
+router.get("/fee-structure/:id", feeController.getSingleFeeStructure);
+router.put("/fee-structure/:id", feeController.updateFeeStructure);
+router.delete("/fee-structure/:id", feeController.deleteFeeStructure);
+
 // Fee Payment
 router.post("/pay", feeController.payFee);
 
