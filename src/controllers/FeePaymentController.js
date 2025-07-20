@@ -73,6 +73,7 @@ exports.payFee = async (req, res) => {
       amountPaid,
       mode,
       remarks,
+      RemainingBalance: toPay,
     });
 
     await payment.save();
@@ -100,9 +101,20 @@ exports.getFeeLogs = async (req, res) => {
 // 4. Get all payments for student
 exports.getPayments = async (req, res) => {
   try {
+    const studentId = req.params.studentId;
+    const student = await Student.findOne({ studentId });
+
+    if (!student) {
+      return res.status(404).json({ error: "Student not found" });
+    }
+
     const payments = await FeePayment.find({
-      student: req.params.studentId,
-    }).sort({ paymentDate: -1 });
+      student: student._id,
+    })
+      .populate("student")
+      .populate("school")
+      .sort({ paymentDate: -1 });
+
     res.json(payments);
   } catch (err) {
     res.status(500).json({ error: err.message });

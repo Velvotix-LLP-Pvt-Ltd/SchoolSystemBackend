@@ -30,6 +30,7 @@ const feePaymentSchema = new mongoose.Schema(
       required: true,
     },
     remarks: String,
+    RemainingBalance: Number,
   },
   { timestamps: true }
 );

@@ -71,25 +71,61 @@ exports.logout = async (req, res) => {
 
 // ✅ Token refresh (sliding session)
 exports.refreshToken = async (req, res) => {
+  const authHeader = req.headers.authorization;
+
+  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    return res.status(401).json({
+      valid: false,
+      error: "Authorization header missing or malformed",
+    });
+  }
+
+  const token = authHeader.split(" ")[1];
+
   try {
-    const oldToken = req.headers.authorization?.split(" ")[1];
-    if (!oldToken) return res.status(401).json({ error: "Token required" });
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-    const decoded = jwt.verify(oldToken, process.env.JWT_SECRET);
+    // Optionally refresh token (sliding session behavior)
+    // You can define a threshold for when to refresh (e.g., if less than 10 mins left)
+    const expInSeconds = decoded.exp * 1000;
+    const now = Date.now();
+    const timeLeft = expInSeconds - now;
 
-    const newToken = jwt.sign(
-      {
-        id: decoded.id,
-        role: decoded.role,
-        schoolId: decoded.schoolId,
-      },
-      process.env.JWT_SECRET,
-      { expiresIn: "30m" }
-    );
+    let newToken = null;
+    if (timeLeft < 10 * 60 * 1000) {
+      // less than 10 mins remaining
+      newToken = jwt.sign(
+        {
+          id: decoded.id,
+          role: decoded.role,
+          schoolId: decoded.schoolId,
+        },
+        process.env.JWT_SECRET,
+        { expiresIn: "30m" }
+      );
+    }
 
-    res.status(200).json({ token: newToken });
+    return res.status(200).json({
+      valid: true,
+      expired: false,
+      decoded,
+      refreshed: !!newToken,
+      token: newToken,
+    });
   } catch (err) {
-    res.status(401).json({ error: "Token expired or invalid" });
+    if (err.name === "TokenExpiredError") {
+      return res.status(401).json({
+        valid: false,
+        expired: true,
+        error: "Token expired",
+      });
+    }
+
+    return res.status(401).json({
+      valid: false,
+      expired: false,
+      error: "Invalid token",
+    });
   }
 };
 
