@@ -32,10 +32,16 @@ exports.payFee = async (req, res) => {
   try {
     const { studentId, amountPaid, mode, remarks } = req.body;
 
-    const student = await Student.findById(studentId).populate("school");
-    if (!student) return res.status(404).json({ error: "Student not found" });
-    if (!student.school)
+    // Find student by studentId (custom ID like "STU001")
+    const student = await Student.findOne({ studentId }).populate("school");
+
+    if (!student) {
+      return res.status(404).json({ error: "Student not found" });
+    }
+
+    if (!student.school) {
       return res.status(400).json({ error: "Student has no school assigned" });
+    }
 
     const schoolId = student.school._id;
     const academicYear = student.school.academic_year;
@@ -44,7 +50,7 @@ exports.payFee = async (req, res) => {
 
     // Get unpaid or partially paid logs in order
     const logs = await FeeLog.find({
-      student: studentId,
+      student: student._id,
       balance: { $gt: 0 },
     }).sort({ year: 1, month: 1 });
 
@@ -61,9 +67,9 @@ exports.payFee = async (req, res) => {
     }
 
     const payment = new FeePayment({
-      student: studentId,
+      student: student._id,
       school: schoolId,
-      academicYear: academicYear,
+      academicYear,
       amountPaid,
       mode,
       remarks,
@@ -73,7 +79,8 @@ exports.payFee = async (req, res) => {
 
     res.status(201).json({ message: "Payment successful", payment });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error("Error processing payment:", err);
+    res.status(500).json({ error: "Payment processing failed" });
   }
 };
 

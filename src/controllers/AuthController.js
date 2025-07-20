@@ -77,11 +77,15 @@ exports.refreshToken = async (req, res) => {
 
     const decoded = jwt.verify(oldToken, process.env.JWT_SECRET);
 
-    const newToken = generateToken({
-      id: decoded.id,
-      role: decoded.role,
-      schoolId: decoded.schoolId,
-    });
+    const newToken = jwt.sign(
+      {
+        id: decoded.id,
+        role: decoded.role,
+        schoolId: decoded.schoolId,
+      },
+      process.env.JWT_SECRET,
+      { expiresIn: "30m" }
+    );
 
     res.status(200).json({ token: newToken });
   } catch (err) {
@@ -93,12 +97,10 @@ exports.check = async (req, res) => {
   const authHeader = req.headers.authorization;
 
   if (!authHeader || !authHeader.startsWith("Bearer ")) {
-    return res
-      .status(401)
-      .json({
-        valid: false,
-        error: "Authorization header missing or malformed",
-      });
+    return res.status(401).json({
+      valid: false,
+      error: "Authorization header missing or malformed",
+    });
   }
 
   const token = authHeader.split(" ")[1];

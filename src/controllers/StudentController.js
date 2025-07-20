@@ -1,5 +1,6 @@
 const Student = require("../models/StudentModel");
 const School = require("../models/school.model");
+const mongoose = require("mongoose");
 
 // 🔄 Internal helper to update school's enrollment summary
 const updateEnrollmentSummaryInController = async (schoolId) => {
@@ -65,11 +66,18 @@ exports.getStudentsBySchool = async (req, res) => {
   }
 };
 
-// Get Single Student
+// Get Single Student by MongoDB _id or studentId
 exports.getStudent = async (req, res) => {
   try {
-    const student = await Student.findById(req.params.id).populate("school");
+    const param = req.params.id;
+
+    const isObjectId = mongoose.Types.ObjectId.isValid(param);
+    const filter = isObjectId ? { _id: param } : { studentId: param };
+
+    const student = await Student.findOne(filter).populate("school");
+
     if (!student) return res.status(404).json({ error: "Student not found" });
+
     res.json(student);
   } catch (err) {
     res.status(500).json({ error: err.message });
