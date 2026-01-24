@@ -39,7 +39,7 @@ app.use("/api/attendance", attendanceRoutes);
 app.use("/api/fee", feeRoutes);
 app.use("/api/payment-structures", paymentStructureRoutes);
 app.use("/api/payment-logs", paymentLogRoutes);
-// app.use("/api/bc", BCToken);
+app.use("/api/bc", BCToken);
 
 // Static files
 app.use("/utils/users", express.static(path.join(__dirname, "utils/users")));
